@@ -1,0 +1,146 @@
+openapi: 3.0.1
+info:
+  title: XendIt Backend Coding Test
+  description: 'This is a backend coding test for XendIt. It serves a ride API that allows you to place a ride and its route.'
+  contact:
+    email: djgomez23@gmail.com
+  version: 1.0.0
+servers:
+  - url: http://localhost:8010
+tags:
+  - name: rides
+    description: Manage rides
+  - name: info
+    description: Retrieve information about the server
+paths:
+  /rides:
+    get:
+      tags:
+        - rides
+      summary: Get rides
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RideResponse'
+    post:
+      tags:
+        - rides
+      summary: Adds a ride
+      requestBody:
+        description: The ride object to be added
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Ride'
+        required: true
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RideResponse'
+  /rides/{id}:
+    get:
+      tags:
+        - rides
+      summary: Find a ride by ID
+      parameters:
+        - name: id
+          in: path
+          description: ID of the ride
+          required: true
+          schema:
+            type: integer
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RideResponse'
+  /health:
+    get:
+      tags:
+        - info
+      summary: Returns the health of the server
+      responses:
+        200:
+          description: Successful operation
+          content:
+            text/html; charset=utf-8:
+              schema:
+                type: string
+                example: Healthy
+components:
+  schemas:
+    Ride:
+      type: object
+      properties:
+        start_lat:
+          type: number
+          description: Starting latitude
+        start_long:
+          type: number
+          description: Starting longitude
+        end_lat:
+          type: number
+          description: End latitude
+        end_long:
+          type: number
+          description: End longitude
+        rider_name:
+          type: string
+          description: Name of the rider
+        driver_name:
+          type: string
+          description: Name of the driver
+        driver_vehicle:
+          type: string
+          description: Vehicle of the driver
+    Error:
+      type: object
+      properties:
+        error_code:
+          type: string
+          description: Error code
+        message:
+          type: string
+          description: Description of the error
+    RideResponse:
+      type: object
+      properties:
+        rideID:
+          type: integer
+          description: ID of the ride
+        startLat:
+          type: number
+          description: Starting latitude
+        startLong:
+          type: number
+          description: Starting longitude
+        endLat:
+          type: number
+          description: End latitude
+        endLong:
+          type: number
+          description: End longitude
+        riderName:
+          type: string
+          description: Name of the rider
+        driverName:
+          type: string
+          description: Name of the driver
+        driverVehicle:
+          type: string
+          description: Vehicle of the driver
+        created:
+          type: string
+          description: Date of creation
