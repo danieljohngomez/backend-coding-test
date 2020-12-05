@@ -8,7 +8,7 @@
   },
   "scripts": {
     "lint": "eslint src/**/*.js *.js",
-    "test": "mocha tests && npm run lint",
+    "test": "nyc --check-coverage mocha tests && npm run lint",
     "start": "node index.js"
   },
   "keywords": [
@@ -26,6 +26,7 @@
     "eslint-config-airbnb-base": "^14.2.1",
     "eslint-plugin-import": "^2.22.1",
     "mocha": "^6.1.4",
+    "nyc": "^15.1.0",
     "supertest": "^4.0.2"
   }
 }
