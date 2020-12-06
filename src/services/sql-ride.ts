@@ -100,7 +100,7 @@ export default class SqlRideService {
     const offset = (page - 1) * limit;
 
     return new Promise((resolve) => {
-      this.db.all(`SELECT * FROM Rides LIMIT ${sqlLimit} OFFSET ${offset}`, (_error: Error, rows: RideEntity[]) => {
+      this.db.all('SELECT * FROM Rides LIMIT ? OFFSET ?', [sqlLimit, offset], (_error: Error, rows: RideEntity[]) => {
         resolve(rows);
       });
     });
