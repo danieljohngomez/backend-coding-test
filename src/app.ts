@@ -1,5 +1,6 @@
 import express, { Request, Response } from 'express';
 import bodyParser from 'body-parser';
+import helmet from 'helmet';
 import parseNumber from './util';
 import SqlRideService from './services/sql-ride';
 import { ApiError } from './models/api-error';
@@ -14,6 +15,8 @@ const app = express();
 const jsonParser = bodyParser.json();
 
 const server = (rideService: SqlRideService) => {
+  app.use(helmet());
+
   app.get('/health', (_req, res) => res.send('Healthy'));
 
   app.post('/rides', jsonParser, async (req: Request<Ride>, res: Response<RideEntity | ApiError>) => {
