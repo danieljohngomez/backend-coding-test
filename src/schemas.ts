@@ -1,6 +1,6 @@
 import { Database } from 'sqlite3';
 
-export const buildSchemas = (db: Database) => {
+export const buildSchemas = (db: Database, callback?: () => void) => {
   const createRideTableSchema = `
         CREATE TABLE Rides
         (
@@ -16,9 +16,12 @@ export const buildSchemas = (db: Database) => {
         )
     `;
 
-  db.run(createRideTableSchema);
+  db.run(createRideTableSchema, callback);
 
   return db;
 };
 
-export default buildSchemas;
+export const deleteSchemas = (db: Database, callback?: () => void) => {
+  db.run('DROP TABLE IF EXISTS Rides', callback);
+  return db;
+};

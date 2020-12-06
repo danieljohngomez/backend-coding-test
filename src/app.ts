@@ -4,6 +4,8 @@ import express from 'express';
 
 import bodyParser from 'body-parser';
 
+import parseNumber from './util';
+
 const app = express();
 
 const jsonParser = bodyParser.json();
@@ -89,23 +91,70 @@ const server = (db: Database) => {
   });
 
   app.get('/rides', (req, res) => {
-    db.all('SELECT * FROM Rides', (err, rows) => {
-      if (err) {
+    const page = parseNumber(req.query.page, 1);
+    const limit = parseNumber(req.query.limit, 20);
+
+    if (page <= 0) {
+      return res.send({
+        error_code: 'VALIDATION_ERROR',
+        message: 'Page must be greater than 0',
+      });
+    }
+
+    if (limit < 0) {
+      return res.send({
+        error_code: 'VALIDATION_ERROR',
+        message: 'Limit must be equal or greater than 0',
+      });
+    }
+
+    db.all('SELECT COUNT(*) AS size FROM Rides', (countError, countRows) => {
+      if (countError) {
         return res.send({
           error_code: 'SERVER_ERROR',
           message: 'Unknown error',
         });
       }
 
-      if (rows.length === 0) {
+      const totalResults = countRows[0].size;
+      const totalPages = limit === 0 ? 1 : Math.ceil(totalResults / limit);
+
+      if (totalResults === 0) {
         return res.send({
           error_code: 'RIDES_NOT_FOUND_ERROR',
           message: 'Could not find any rides',
         });
       }
 
-      return res.send(rows);
+      const sqlLimit = limit === 0 ? -1 : limit;
+      const offset = (page - 1) * limit;
+
+      db.all(`SELECT * FROM Rides LIMIT ${sqlLimit} OFFSET ${offset}`, (err, rows) => {
+        if (err) {
+          return res.send({
+            error_code: 'SERVER_ERROR',
+            message: 'Unknown error',
+          });
+        }
+
+        if (rows.length === 0) {
+          return res.send({
+            error_code: 'RIDES_NOT_FOUND_ERROR',
+            message: 'Could not find any rides',
+          });
+        }
+
+        return res.send({
+          total_results: totalResults,
+          total_pages: totalPages,
+          page,
+          limit,
+          data: rows,
+        });
+      });
+      return true;
     });
+    return true;
   });
 
   app.get('/rides/:id', (req, res) => {
