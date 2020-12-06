@@ -1,14 +1,15 @@
-const port = 8010;
+import { createLogger, format, transports } from 'winston';
+import sqlite3 from 'sqlite3';
+import { buildSchemas } from './schemas';
+import server from './app';
 
-const sqlite3 = require('sqlite3').verbose();
+sqlite3.verbose();
+
+const port = 8010;
 
 const db = new sqlite3.Database(':memory:');
 
-const { createLogger, format, transports } = require('winston');
-
-const buildSchemas = require('./src/schemas');
-
-const app = require('./src/app')(db);
+const app = server(db);
 
 const logger = createLogger({
   level: 'info',

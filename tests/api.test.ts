@@ -1,24 +1,19 @@
-const request = require('supertest');
+import request from 'supertest';
+import assert from 'assert';
+import sqlite3 from 'sqlite3';
+import server from '../src/app';
+import { buildSchemas } from '../src/schemas';
 
-const sqlite3 = require('sqlite3').verbose();
+sqlite3.verbose();
 
 const db = new sqlite3.Database(':memory:');
 
-const assert = require('assert');
-
-const app = require('../src/app')(db);
-
-const buildSchemas = require('../src/schemas');
+const app = server(db);
 
 describe('API tests', () => {
   before((done) => {
-    db.serialize((err) => { 
-      if (err) {
-        return done(err);
-      }
-
+    db.serialize(() => {
       buildSchemas(db);
-
       done();
     });
   });
@@ -214,5 +209,4 @@ describe('API tests', () => {
         });
     });
   });
-
 });
