@@ -26,7 +26,21 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/PaginatedRideResponse'
+                  $ref: '#/components/schemas/PaginatedRideEntities'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/PaginatedRideEntities'
+        400:
+          description: Invalid request parameters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Error'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/ValidationPaginationError'
       parameters:
         - name: limit
           in: query
@@ -50,6 +64,9 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/Ride'
+            examples:
+              objectExample:
+                $ref: '#/components/examples/Ride'
         required: true
       responses:
         200:
@@ -57,7 +74,20 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RideResponse'
+                $ref: '#/components/schemas/RideEntity'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/RideEntity'
+        400:
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/ValidationRideError'
+                  
   /rides/{id}:
     get:
       tags:
@@ -76,9 +106,19 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/RideResponse'
+                $ref: '#/components/schemas/RideEntity'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/RideEntity'
+        404:
+          description: Ride not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                objectExample:
+                  $ref: '#/components/examples/RideNotFoundError'
   /health:
     get:
       tags:
@@ -97,37 +137,28 @@ components:
     Ride:
       type: object
       properties:
-        start_lat:
+        startLat:
           type: number
-          description: Starting latitude
-        start_long:
+          description: Starting latitude, must be between -90 - 90
+        startLong:
           type: number
-          description: Starting longitude
-        end_lat:
+          description: Starting longitude, must be between -180 to 180 degrees
+        endLat:
           type: number
-          description: End latitude
-        end_long:
+          description: End latitude must, be between -90 - 90
+        endLong:
           type: number
-          description: End longitude
+          description: End longitude, must be between -180 to 180 degrees
         rider_name:
           type: string
-          description: Name of the rider
+          description: Name of the rider, not empty
         driver_name:
           type: string
-          description: Name of the driver
+          description: Name of the driver, not empty
         driver_vehicle:
           type: string
-          description: Vehicle of the driver
-    Error:
-      type: object
-      properties:
-        error_code:
-          type: string
-          description: Error code
-        message:
-          type: string
-          description: Description of the error
-    RideResponse:
+          description: Vehicle of the driver, not empty
+    RideEntity:
       type: object
       properties:
         rideID:
@@ -157,13 +188,13 @@ components:
         created:
           type: string
           description: Date of creation
-    PaginatedRideResponse:
+    PaginatedRideEntities:
       type: object
       properties:
-        total_results:
+        totalResults:
           type: integer
           description: total count of the rides
-        total_pages:
+        totalPages:
           type: number
           description: total count of pages
         page:
@@ -175,5 +206,74 @@ components:
         data:
           type: array
           items:
-            $ref: '#/components/schemas/RideResponse'
+            $ref: '#/components/schemas/RideEntity'
           description: list of rides
+    Error:
+      type: object
+      properties:
+        errorCode:
+          type: string
+          description: Error code
+        messages:
+          type: array
+          items:
+            type: string
+          description: Error messages
+  examples:
+    Ride:
+      value:
+        startLat: 35.460670
+        startLong: 26.450755
+        endLat: 40.003424
+        endLong: 51.553412
+        riderName: 'John Doe'
+        driverName: 'Jane Doe'
+        driverVehicle : 'Sedan'
+      summary: An example valid ride object
+    RideEntity:
+      value:
+        rideID: 1
+        startLat: 35.460670
+        startLong: 26.450755
+        endLat: 40.003424
+        endLong: 51.553412
+        riderName: 'John Doe'
+        driverName: 'Jane Doe'
+        driverVehicle : Sedan
+        created: '2020-12-06 06:23:36'
+      summary: An example ride entity object
+    PaginatedRideEntities:
+      value:
+        totalResults: 1
+        totalPages: 1
+        page: 1
+        limit: 20
+        data: [ 
+          { 
+            rideID: 1,
+            startLat: 35.460670,
+            startLong: 26.450755,
+            endLat: 40.003424,
+            endLong: 51.553412,
+            riderName: 'John Doe',
+            driverName: 'Jane Doe',
+            driverVehicle : Sedan,
+            created: '2020-12-06 06:23:36' 
+          }
+        ]
+      summary: An example paginated ride entities object
+    ValidationRideError:
+      value:
+        errorCode: 'VALIDATION_ERROR'
+        messages: ['Rider name must be a non empty string']
+      summary: An error response when parameters are invalid
+    ValidationPaginationError:
+      value:
+        errorCode: 'VALIDATION_ERROR'
+        messages: ['Page must be greater than 0']
+      summary: An error response when parameters are invalid
+    RideNotFoundError:
+      value:
+        errorCode: 'RIDES_NOT_FOUND_ERROR'
+        messages: ['Could not find any rides']
+      summary: An error response when a ride is not found

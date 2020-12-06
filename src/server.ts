@@ -1,7 +1,7 @@
 import { createLogger, format, transports } from 'winston';
 import sqlite3 from 'sqlite3';
-import { buildSchemas } from './schemas';
 import server from './app';
+import SqlRideService from './services/sql-ride';
 
 sqlite3.verbose();
 
@@ -9,7 +9,9 @@ const port = 8010;
 
 const db = new sqlite3.Database(':memory:');
 
-const app = server(db);
+const rideService = new SqlRideService(db);
+
+const app = server(rideService);
 
 const logger = createLogger({
   level: 'info',
@@ -29,8 +31,6 @@ const logger = createLogger({
   ],
 });
 
-db.serialize(() => {
-  buildSchemas(db);
-
+rideService.initializeDb().then(() => {
   app.listen(port, () => logger.info(`App started and listening on port ${port}`));
 });
