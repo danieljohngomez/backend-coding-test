@@ -1,12 +1,14 @@
-const express = require('express');
+import { Database } from 'sqlite3';
+
+import express from 'express';
+
+import bodyParser from 'body-parser';
 
 const app = express();
 
-const bodyParser = require('body-parser');
-
 const jsonParser = bodyParser.json();
 
-module.exports = (db) => {
+const server = (db: Database) => {
   app.get('/health', (req, res) => res.send('Healthy'));
 
   app.post('/rides', jsonParser, (req, res) => {
@@ -128,3 +130,5 @@ module.exports = (db) => {
 
   return app;
 };
+
+export default server;
