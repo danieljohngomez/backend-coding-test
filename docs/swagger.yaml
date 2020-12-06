@@ -26,7 +26,20 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/RideResponse'
+                  $ref: '#/components/schemas/PaginatedRideResponse'
+      parameters:
+        - name: limit
+          in: query
+          description: "Maximum number of rides to return. Must be >= 0. To return all rides, use 0."
+          schema:
+            type: integer
+            default: 20
+        - name: page
+          in: query
+          description: "The page of results to return. Must be > 0."
+          schema:
+            type: integer
+            default: 1
     post:
       tags:
         - rides
@@ -144,3 +157,23 @@ components:
         created:
           type: string
           description: Date of creation
+    PaginatedRideResponse:
+      type: object
+      properties:
+        total_results:
+          type: integer
+          description: total count of the rides
+        total_pages:
+          type: number
+          description: total count of pages
+        page:
+          type: number
+          description: the current page
+        limit:
+          type: number
+          description: maximum number of rides in each page
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/RideResponse'
+          description: list of rides

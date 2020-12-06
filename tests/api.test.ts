@@ -2,7 +2,8 @@ import request from 'supertest';
 import assert from 'assert';
 import sqlite3 from 'sqlite3';
 import server from '../src/app';
-import { buildSchemas } from '../src/schemas';
+import { buildSchemas, deleteSchemas } from '../src/schemas';
+import { addRide } from './util';
 
 sqlite3.verbose();
 
@@ -11,10 +12,9 @@ const db = new sqlite3.Database(':memory:');
 const app = server(db);
 
 describe('API tests', () => {
-  before((done) => {
+  beforeEach((done) => {
     db.serialize(() => {
-      buildSchemas(db);
-      done();
+      deleteSchemas(db, () => buildSchemas(db, () => done()));
     });
   });
 
@@ -168,32 +168,99 @@ describe('API tests', () => {
   });
 
   describe('GET /rides', () => {
-    it('should get rides', (done) => {
+    it('should return error if no ride', (done) => {
       request(app)
         .get('/rides')
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200)
         .end((err, res) => {
-          const ride = res.body[0];
-          assert(ride != null);
+          const body = res.body;
+          assert.strictEqual(body.error_code, 'RIDES_NOT_FOUND_ERROR');
+          assert.strictEqual(body.message, 'Could not find any rides');
           return done();
         });
+    });
+
+    it('should return rides', (done) => {
+      addRide(db, () => {
+        request(app)
+          .get('/rides')
+          .set('Accept', 'application/json')
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            assert.strictEqual(res.body.total_results, 1);
+            assert.strictEqual(res.body.total_pages, 1);
+            assert.strictEqual(res.body.page, 1);
+            assert.strictEqual(res.body.limit, 20);
+            const ride = res.body.data[0];
+            assert(ride != null);
+            return done();
+          });
+      });
+    });
+
+    it('should return validation error if page is <= 0', (done) => {
+      request(app)
+        .get('/rides?page=0')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end((err, res) => {
+          assert.strictEqual(res.body.error_code, 'VALIDATION_ERROR');
+          assert.strictEqual(res.body.message, 'Page must be greater than 0');
+          return done();
+        });
+    });
+
+    it('should return validation error if limit is < 0', (done) => {
+      request(app)
+        .get('/rides?limit=-1')
+        .set('Accept', 'application/json')
+        .expect('Content-Type', /json/)
+        .expect(200)
+        .end((err, res) => {
+          assert.strictEqual(res.body.error_code, 'VALIDATION_ERROR');
+          assert.strictEqual(res.body.message, 'Limit must be equal or greater than 0');
+          return done();
+        });
+    });
+
+    it('should honor pagination when getting rides', (done) => {
+      addRide(db, () => addRide(db, () => {
+        request(app)
+          .get('/rides?limit=1&page=1')
+          .set('Accept', 'application/json')
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            assert.strictEqual(res.body.total_results, 2);
+            assert.strictEqual(res.body.total_pages, 2);
+            assert.strictEqual(res.body.page, 1);
+            assert.strictEqual(res.body.limit, 1);
+            const ride = res.body.data[0];
+            assert(ride != null);
+            return done();
+          });
+      }));
     });
   });
 
   describe('GET /rides/{id}', () => {
     it('should get ride', (done) => {
-      request(app)
-        .get('/rides/1')
-        .set('Accept', 'application/json')
-        .expect('Content-Type', /json/)
-        .expect(200)
-        .end((err, res) => {
-          const ride = res.body[0];
-          assert.strictEqual(ride.rideID, 1);
-          return done();
-        });
+      addRide(db, () => {
+        request(app)
+          .get('/rides/1')
+          .set('Accept', 'application/json')
+          .expect('Content-Type', /json/)
+          .expect(200)
+          .end((err, res) => {
+            const ride = res.body[0];
+            assert.strictEqual(ride.rideID, 1);
+            return done();
+          });
+      });
     });
 
     it('should get not return ride if ID does not exist', (done) => {
