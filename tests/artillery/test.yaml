@@ -1,0 +1,45 @@
+config:
+  target: "http://localhost:8010"
+  plugins:
+    expect: {}
+  phases:
+    - duration: 15
+      arrivalRate: 20
+      name: Load test
+    - duration: 15
+      arrivalRate: 30
+      name: Ramp up load
+    - duration: 30
+      arrivalRate: 50
+      name: Sustained load
+  ensure:
+    p99: 50
+scenarios:
+  - name: "Get health"
+    flow:
+      - get:
+          url: "/health"
+          expect:
+            - statusCode: 200
+  - name: "Insert then get"
+    flow:
+      - post:
+          url: "/rides"
+          json: 
+            startLat: 1
+            startLong: 2
+            endLat: 3
+            endLong: 0
+            riderName: rider
+            driverName: driver
+            driverVehicle: car
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/rides"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/rides/1"
+          expect:
+            - statusCode: 200
