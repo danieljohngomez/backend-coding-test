@@ -29,6 +29,10 @@ const testRide: Ride = {
   driverVehicle: 'Vehicle'
 }
 
+const hasSecurityHeaders = (response: any) => {
+  expect(response.headers['x-frame-options']).equals('SAMEORIGIN');
+}
+
 describe('API tests', () => {
   beforeEach(async () => {
     await rideService.clearDb();
@@ -40,7 +44,11 @@ describe('API tests', () => {
       request(app)
         .get('/health')
         .expect('Content-Type', /text/)
-        .expect(200, done);
+        .expect(200, done)
+        .end((_err, res) => {
+          hasSecurityHeaders(res);
+          done();
+        });
     });
   });
 
@@ -52,7 +60,7 @@ describe('API tests', () => {
         .set('Accept', 'application/json')
         .expect('Content-Type', /json/)
         .expect(200)
-        .end((err, res) => {
+        .end((_err, res) => {
           const ride = res.body;
           expect(ride.startLat).is.equals(testRide.startLat);
           expect(ride.startLong).is.equals(testRide.startLong);
@@ -61,6 +69,7 @@ describe('API tests', () => {
           expect(ride.riderName).is.equals(testRide.riderName);
           expect(ride.driverName).is.equals(testRide.driverName);
           expect(ride.driverVehicle).is.equals(testRide.driverVehicle);
+          hasSecurityHeaders(res);
           return done();
         });
     });
@@ -91,6 +100,7 @@ describe('API tests', () => {
           const response: ApiError = res.body;
           expect(response.errorCode).is.equals('VALIDATION_ERROR')
           expect(response.messages).deep.equals(['Test Error'])
+          hasSecurityHeaders(res);
           return done();
         });
     });
@@ -109,6 +119,7 @@ describe('API tests', () => {
           expect(rides.totalPages).is.equals(1);
           expect(rides.page).is.equals(1);
           expect(rides.data).is.empty;
+          hasSecurityHeaders(res);
           done();
         });
     });
@@ -175,6 +186,7 @@ describe('API tests', () => {
           .end((_err, res) => {
             const ride: RideEntity = res.body;
             expect(ride.rideID).is.equals(id);
+            hasSecurityHeaders(res);
           });
     });
 
